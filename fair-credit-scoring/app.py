@@ -1,6 +1,4 @@
-
-# Fair Credit Scoring Dashboard (Streamlit)
-
+# 💳 Fair Credit Scoring Dashboard (Streamlit)
 
 import os
 import numpy as np
@@ -16,7 +14,8 @@ from fairlearn.metrics import (
     demographic_parity_difference, equalized_odds_difference
 )
 
-# Page Config (first)
+
+# Page Config
 
 st.set_page_config(page_title="Fair Credit Scoring Dashboard", layout="wide")
 st.title("💳 Fair Credit Scoring Dashboard — Interactive Demo")
@@ -26,7 +25,7 @@ st.title("💳 Fair Credit Scoring Dashboard — Interactive Demo")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "credit_model.pkl")
-TEST_PATH  = os.path.join(BASE_DIR, "processed_test.csv")
+TEST_PATH = os.path.join(BASE_DIR, "processed_test.csv")
 
 @st.cache_resource
 def load_model(path=MODEL_PATH):
@@ -44,20 +43,20 @@ def load_test(path=TEST_PATH):
         st.warning(f"⚠️ Could not load test data: {e}")
         return None
 
-model   = load_model()
+model = load_model()
 test_df = load_test()
 
 
 # Sidebar inputs
 
 st.sidebar.header("Applicant Input")
-loan_amnt     = st.sidebar.number_input("Loan Amount", min_value=500, max_value=50000, value=10000, step=500)
-term          = st.sidebar.selectbox("Term", ["36 months", "60 months"])
-int_rate      = st.sidebar.slider("Interest Rate (%)", 5.0, 30.0, 12.0)
-annual_inc    = st.sidebar.number_input("Annual Income", min_value=1000, max_value=500000, value=50000, step=1000)
-dti           = st.sidebar.slider("Debt-to-Income Ratio", 0.0, 40.0, 15.0)
-purpose       = st.sidebar.selectbox("Purpose", ["credit_card", "debt_consolidation", "home_improvement",
-                                                "major_purchase", "small_business", "other"])
+loan_amnt = st.sidebar.number_input("Loan Amount", min_value=500, max_value=50000, value=10000, step=500)
+term = st.sidebar.selectbox("Term", ["36 months", "60 months"])
+int_rate = st.sidebar.slider("Interest Rate (%)", 5.0, 30.0, 12.0)
+annual_inc = st.sidebar.number_input("Annual Income", min_value=1000, max_value=500000, value=50000, step=1000)
+dti = st.sidebar.slider("Debt-to-Income Ratio", 0.0, 40.0, 15.0)
+purpose = st.sidebar.selectbox("Purpose", ["credit_card", "debt_consolidation", "home_improvement",
+                                           "major_purchase", "small_business", "other"])
 home_ownership = st.sidebar.selectbox("Home Ownership", ["RENT", "OWN", "MORTGAGE", "OTHER"])
 
 st.sidebar.markdown("---")
@@ -67,7 +66,7 @@ sensitive_col = st.sidebar.selectbox(
     options=(test_df.columns.tolist() if test_df is not None else ["home_ownership"]),
     index=0
 )
-threshold      = st.sidebar.slider("Decision threshold", 0.0, 1.0, 0.5, 0.01)
+threshold = st.sidebar.slider("Decision threshold", 0.0, 1.0, 0.5, 0.01)
 run_mitigation = st.sidebar.checkbox("Show Mitigation (group thresholds)", value=False)
 
 # Single-row input frame
@@ -80,6 +79,7 @@ input_df = pd.DataFrame([{
     "purpose": purpose,
     "home_ownership": home_ownership
 }])
+
 
 # Tabs
 
@@ -126,7 +126,7 @@ with tab2:
                 c1.metric("Default Probability", f"{prob:.2%}")
                 c2.metric(f"Decision (thr={threshold:.2f})", decision)
 
-                gauge = pd.DataFrame({"prob":[prob]})
+                gauge = pd.DataFrame({"prob": [prob]})
                 chart = alt.Chart(gauge).mark_bar(size=30).encode(
                     x=alt.X('prob:Q', axis=alt.Axis(format='.0%', title='Probability')),
                     y=alt.Y('prob:Q', title=None),
@@ -137,7 +137,8 @@ with tab2:
             except Exception as e:
                 st.error(f"Prediction failed: {e}")
 
-# TAB 3 — Explainability (modern SHAP only)
+
+# TAB 3 — Explainability (SHAP)
 
 with tab3:
     st.subheader("Explainability")
@@ -145,7 +146,7 @@ with tab3:
         st.error("Model not loaded.")
     else:
         try:
-            # Prepare data for SHAP
+            # Local SHAP
             if hasattr(model, 'named_steps') and 'classifier' in model.named_steps:
                 clf = model.named_steps['classifier']
                 pre = model.named_steps.get('preprocessor', None)
@@ -157,43 +158,45 @@ with tab3:
                     X_for_shap = input_df
                     feature_names = input_df.columns
 
-                explainer   = shap.Explainer(clf, X_for_shap, feature_names=feature_names)
+                explainer = shap.Explainer(clf, X_for_shap, feature_names=feature_names)
                 shap_values = explainer(X_for_shap)
             else:
-                explainer   = shap.Explainer(model, input_df)
+                explainer = shap.Explainer(model, input_df)
                 shap_values = explainer(input_df)
 
-            # Local waterfall — create explicit figure to avoid Streamlit deprecation warning
+            # Local waterfall
             fig, ax = plt.subplots()
-            shap.plots.waterfall(shap_values[0], show=False)  # draws on current figure
+            shap.plots.waterfall(shap_values[0], show=False)
             st.pyplot(fig, bbox_inches="tight", dpi=300)
 
         except Exception as e:
-            st.error(f" SHAP explanation failed: {e}")
+            st.error(f"Local SHAP explanation failed: {e}")
 
-        # Global summary (if we have a test set)
+        # Global SHAP
         if test_df is not None and 'default' in test_df.columns:
             st.subheader("Global Feature Importance")
             try:
-                sample   = test_df.sample(min(500, len(test_df)), random_state=42)
+                sample = test_df.sample(min(500, len(test_df)), random_state=42)
                 X_sample = sample.drop(columns=['default'])
 
                 if hasattr(model, 'named_steps') and 'preprocessor' in model.named_steps:
                     X_trans = model.named_steps['preprocessor'].transform(X_sample)
-                    clf     = model.named_steps['classifier']
-                    expl    = shap.Explainer(clf, X_trans,
-                                             feature_names=model.named_steps['preprocessor'].get_feature_names_out())
-                    sv      = expl(X_trans)
+                    clf = model.named_steps['classifier']
+                    expl = shap.Explainer(clf, X_trans,
+                                          feature_names=model.named_steps['preprocessor'].get_feature_names_out())
+                    sv = expl(X_trans)
                 else:
                     expl = shap.Explainer(model, X_sample)
-                    sv   = expl(X_sample)
+                    sv = expl(X_sample)
 
                 fig, ax = plt.subplots()
-                shap.summary_plot(sv, show=False)  # draws on current figure
+                shap.summary_plot(sv, show=False)
                 st.pyplot(fig, bbox_inches="tight", dpi=300)
 
             except Exception as e:
-         
+                st.warning(f"Global SHAP failed: {e}")
+
+
 # TAB 4 — Fairness Dashboard
 
 with tab4:
@@ -229,15 +232,17 @@ with tab4:
                 "prob": probs
             })
 
+            # Summary stats
             agg = df_groups.groupby("sensitive").agg(
-                n=('y_true','count'),
-                default_rate=('y_true','mean'),
-                predicted_positive_rate=('y_pred','mean'),
-                avg_prob=('prob','mean')
+                n=('y_true', 'count'),
+                default_rate=('y_true', 'mean'),
+                predicted_positive_rate=('y_pred', 'mean'),
+                avg_prob=('prob', 'mean')
             ).reset_index().sort_values('n', ascending=False)
 
             st.dataframe(agg, use_container_width=True)
 
+            # Bar chart
             chart = alt.Chart(agg).mark_bar().encode(
                 x=alt.X('predicted_positive_rate:Q',
                         axis=alt.Axis(format='.0%', title='Predicted Positive Rate')),
@@ -249,6 +254,7 @@ with tab4:
             ).properties(height=400, width=700)
             st.altair_chart(chart, use_container_width=True)
 
+            # Fairness metrics
             metrics = {
                 'selection_rate': selection_rate,
                 'tpr': true_positive_rate,
@@ -263,8 +269,9 @@ with tab4:
             eo_diff = equalized_odds_difference(y_true, preds, sensitive_features=group)
             c1, c2 = st.columns(2)
             c1.metric("Demographic Parity Difference", f"{dp_diff:.3f}")
-            c2.metric("Equalized Odds Difference",   f"{eo_diff:.3f}")
+            c2.metric("Equalized Odds Difference", f"{eo_diff:.3f}")
 
+            # Mitigation
             if run_mitigation:
                 st.subheader("Mitigation: Group Thresholding")
                 target = agg['predicted_positive_rate'].mean()
@@ -277,6 +284,7 @@ with tab4:
                 df_groups['pred_mitig'] = df_groups.apply(
                     lambda r: int(r['prob'] >= thresholds[r['sensitive']]), axis=1
                 )
+
                 mf_mit = MetricFrame(
                     metrics=metrics,
                     y_true=df_groups['y_true'],
@@ -305,7 +313,7 @@ with tab4:
                 c2.metric("EO Difference (mitigated)", f"{eo_diff_mit:.3f}")
 
 
-# 
-st.markdown("---")
-st.markdown("👨‍💻 Built by **Teniola Kehinde** — [GitHub](https://github.com/yourgithub) | [Medium](https://medium.com)")
+# Footer
 
+st.markdown("---")
+st.markdown("👨‍💻 Built by **Teniola Kehinde** — [GitHub](https://github.com/teniola-c/fair-credit-scoring/fair-credit-scoring) | [Medium](https://medium.com)")
