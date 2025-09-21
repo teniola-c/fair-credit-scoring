@@ -82,7 +82,7 @@ input_df = pd.DataFrame([{
 }])
 
 # Tabs
---
+
 tab1, tab2, tab3, tab4 = st.tabs([
     "📥 Applicant Input", "📊 Prediction & Risk",
     "🔎 Explainability", "⚖️ Fairness Dashboard"
@@ -308,3 +308,4 @@ with tab4:
 # 
 st.markdown("---")
 st.markdown("👨‍💻 Built by **Teniola Kehinde** — [GitHub](https://github.com/yourgithub) | [Medium](https://medium.com)")
+
