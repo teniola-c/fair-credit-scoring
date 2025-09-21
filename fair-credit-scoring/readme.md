@@ -47,6 +47,7 @@ git clone https://github.com/yourusername/fair-credit-scoring.git
 cd fair-credit-scoring
 pip install -r requirements.txt
 
-## Run the dashboard:
+## Run the dashboard
 streamlit run app.py
+
 
