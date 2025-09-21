@@ -44,8 +44,9 @@ air-credit-scoring/
 
 ## Run Locally
 ```bash
-git clone https://github.com/yourusername/fair-credit-scoring.git
+git clone https://github.com/teniola-c/fair-credit-scoring/tree/main/fair-credit-scoring.git
 cd fair-credit-scoring
 pip install -r requirements.txt
 streamlit run app.py
+
 
