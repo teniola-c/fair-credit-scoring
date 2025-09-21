@@ -32,20 +32,20 @@ This project demonstrates how a **data analyst** can combine:
 4. **Fairness Dashboard**: Compare approval rates & metrics across groups (e.g. home ownership)  
 5. **Bias Mitigation**: Simple per-group thresholds to reduce unfairness  
 
----
-
-## 📸 Screenshots
-
-### 1. Prediction Tab
-<img src="screenshots/prediction.png" width="700">
-
-### 2. Explainability (SHAP)
-<img src="screenshots/shap.png" width="700">
-
-### 3. Fairness Dashboard
-<img src="screenshots/fairness.png" width="700">
-
----
 
 ##  Project Structure
+air-credit-scoring/
+│── app.py # Streamlit app
+│── credit_model.pkl # trained ML pipeline
+│── processed_test.csv # test data with labels + sensitive features
+│── requirements.txt # dependencies
+│── README.md # project documentation
+│── screenshots/ # app screenshots
+
+## Run Locally
+```bash
+git clone https://github.com/yourusername/fair-credit-scoring.git
+cd fair-credit-scoring
+pip install -r requirements.txt
+streamlit run app.py
 
