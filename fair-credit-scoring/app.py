@@ -316,4 +316,5 @@ with tab4:
 # Footer
 
 st.markdown("---")
-st.markdown("👨‍💻 Built by **Teniola Kehinde** — [GitHub](https://github.com/teniola-c/fair-credit-scoring/fair-credit-scoring) | [Medium](https://medium.com)")
+st.markdown("👨‍💻 Built by **Teniola Kehinde** — [GitHub](https://github.com/teniola-c/fair-credit-scoring/edit/main/fair-credit-scoring/app.py) | [Medium](https://medium.com)")
+
